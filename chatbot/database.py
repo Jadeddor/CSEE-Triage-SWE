@@ -13,7 +13,7 @@ class DatabaseManager:
         conn = self.get_connection()
         c = conn.cursor()
         
-        print(f"🔄 Syncing {len(articles)} articles to database...")
+        print(f"Syncing {len(articles)} articles to database...")
         
         for article in articles:
             try:

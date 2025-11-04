@@ -14,9 +14,9 @@ try:
     from atlassian_client import AtlassianClient
     atlassian_client = AtlassianClient()
     ATLASSIAN_AVAILABLE = True
-    print("✅ Atlassian client loaded successfully")
+    print("Atlassian client loaded successfully")
 except Exception as e:
-    print(f"⚠️ Atlassian client failed: {e}")
+    print(f"Atlassian client failed: {e}")
     ATLASSIAN_AVAILABLE = False
     atlassian_client = None
 
@@ -134,8 +134,8 @@ def sync_articles():
                 'message': 'Cannot connect to Atlassian. Check your credentials and network.'
             }), 500
         
-        print("📚 Fetching articles from Atlassian...")
-        articles_data = atlassian_client.get_articles()
+        print("Fetching articles from Atlassian...")
+        articles_data = atlassian_client.get_articles(limit=50)
         if not articles_data:
             return jsonify({
                 'status': 'error', 
