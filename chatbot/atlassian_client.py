@@ -144,7 +144,7 @@ class AtlassianClient:
         }
 
 # Debug script
-if __name__ == '__main__':
+'''if __name__ == '__main__':
     print("=== Testing Atlassian Connection ===")
     client = AtlassianClient()
     
@@ -157,4 +157,4 @@ if __name__ == '__main__':
         else:
             print("\n No articles fetched. Check the error messages above.")
     else:
-        print("\n Connection failed. Check your configuration.")
+        print("\n Connection failed. Check your configuration.")'''

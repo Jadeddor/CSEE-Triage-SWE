@@ -329,8 +329,8 @@
             
             let messageHTML = text;
             
-            if (data && data.source && !isError) {
-                messageHTML += `<div class="message-source">Source: <a href="${data.url}" target="_blank">${data.source}</a></div>`;
+            if (data && data.sources && !isError) {
+                messageHTML += `<div class="message-source">Source: <a href="${data.urls[0]}" target="_blank">${data.sources}</a></div>`;
             }
             
             if (data && data.suggestions && data.suggestions.length > 0 && !isError) {
