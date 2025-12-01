@@ -19,3 +19,8 @@ ATLASSIAN_CONFIG = {
     'api_token' : get_required_env_var('ATLASSIAN_API_TOKEN'),
     'space_key' : get_required_env_var('ATLASSIAN_SPACE_KEY'),
 }
+
+OLLAMA_CONFIG = {
+    'base_url' : os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434'),
+    'model' : os.getenv('OLLAMA_MODEL', 'llama3.1:8b')
+}

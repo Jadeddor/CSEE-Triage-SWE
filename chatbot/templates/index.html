@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #ffffff 0%, #bbbbbb 100%);
             height: 100vh;
             display: flex;
             justify-content: center;
@@ -33,7 +33,7 @@
         }
 
         .chat-header {
-            background: #4f46e5;
+            background: #fdb515;
             color: white;
             padding: 20px;
             text-align: center;
@@ -96,7 +96,7 @@
         }
 
         .user-message .message-content {
-            background: #4f46e5;
+            background: #fdb515;
             color: white;
             border-bottom-right-radius: 4px;
         }
@@ -115,7 +115,7 @@
         }
 
         .message-source a {
-            color: #4f46e5;
+            color: #fdb515;
             text-decoration: none;
         }
 
@@ -171,12 +171,12 @@
         }
 
         .chat-input input:focus {
-            border-color: #4f46e5;
+            border-color: #fdb515;
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
 
         .send-button {
-            background: #4f46e5;
+            background: #fdb515;
             color: white;
             border: none;
             padding: 12px 24px;
@@ -188,7 +188,7 @@
         }
 
         .send-button:hover:not(:disabled) {
-            background: #4338ca;
+            background: #fdb515;
         }
 
         .send-button:disabled {
@@ -329,8 +329,8 @@
             
             let messageHTML = text;
             
-            if (data && data.source && !isError) {
-                messageHTML += `<div class="message-source">Source: <a href="${data.url}" target="_blank">${data.source}</a></div>`;
+            if (data && data.sources && !isError) {
+                messageHTML += `<div class="message-source">Source: <a href="${data.urls[0]}" target="_blank">${data.sources}</a></div>`;
             }
             
             if (data && data.suggestions && data.suggestions.length > 0 && !isError) {

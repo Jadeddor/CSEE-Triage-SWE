@@ -14,9 +14,9 @@ try:
     from atlassian_client import AtlassianClient
     atlassian_client = AtlassianClient()
     ATLASSIAN_AVAILABLE = True
-    print("✅ Atlassian client loaded successfully")
+    print("Atlassian client loaded successfully")
 except Exception as e:
-    print(f"⚠️ Atlassian client failed: {e}")
+    print(f"Atlassian client failed: {e}")
     ATLASSIAN_AVAILABLE = False
     atlassian_client = None
 
@@ -51,7 +51,7 @@ def add_test_articles():
     c.execute('SELECT COUNT(*) FROM faq_articles')
     count = c.fetchone()[0]
     
-    if count == 0:
+    if count == -1:
         print(" Adding test articles to database...")
         test_articles = [
             {
@@ -100,7 +100,7 @@ def add_test_articles():
     conn.close()
 
 # Add test data on startup
-add_test_articles()
+# add_test_articles()
 
 @app.before_request
 def make_session_permanent():
@@ -134,8 +134,8 @@ def sync_articles():
                 'message': 'Cannot connect to Atlassian. Check your credentials and network.'
             }), 500
         
-        print("📚 Fetching articles from Atlassian...")
-        articles_data = atlassian_client.get_articles()
+        print("Fetching articles from Atlassian...")
+        articles_data = atlassian_client.get_articles(limit=50)
         if not articles_data:
             return jsonify({
                 'status': 'error', 
@@ -147,9 +147,10 @@ def sync_articles():
         
         return jsonify({
             'status': 'success', 
-            'message': f'Synced {len(parsed_articles)} articles',
+            'message': f'Synced {len(parsed_articles)} articles, generated embeddings',
             'count': len(parsed_articles)
         })
+    
     except AttributeError as e:
         print(f"Attribute rror in sync: {e}")
         return jsonify({
@@ -168,45 +169,55 @@ def chat():
     # Handle chat messages
     try:
         data = request.get_json()
-        if not data:
-            return jsonify({'error': 'No JSON data provided'}), 400
-            
         user_message = data.get('message', '')
         session_id = session.get('session_id')
-        
-        if not user_message:
-            return jsonify({'error': 'No message provided'}), 400
-        
-        print(f"💬 Chat request: {user_message}")
-        
-        # Search for relevant articles
-        relevant_articles = db_manager.search_articles(user_message, limit=5)
-        print(f"🔍 Found {len(relevant_articles)} relevant articles")
-        
+
+        relevant_articles = db_manager.search_articles_llm(user_message, limit=3)
+
         if relevant_articles:
-            # For now, return the first relevant article
-            response = {
-                'answer': format_answer(relevant_articles[0]['content']),
-                'source': relevant_articles[0]['title'],
-                'url': relevant_articles[0]['url'],
-                'suggestions': [article['title'] for article in relevant_articles[1:4]]
+            context = "\n\n".join([f"# {a['title']}\n{a['content']}"
+                                   for a in relevant_articles])
+            
+            prompt = f"""You are a helpful FAQ assistant. Use the following knowledgebase articles to answer the user's question accurately and helpfully.
+                        User Question: {user_message}
+
+                        Knowledgebase articles:
+                        {context}
+
+                        Instructions:
+                            - Answer based ONLY on the provided articles
+                            - Be concise but comprehensive
+                            - If the articles don't contain the answer, politely state as such
+                            - Include relevant details from the articles
+                            - Format your response in clear and readable paragraphs.
+                            - If the response includes a numbered list, bullet points, or any other specially formatted objects, make sure to format for human readability. That is, if you have a numbered list, have each number entry (along with it's content) appear on a new line.
+
+                        Answer:"""
+            
+            answer = db_manager.generate_ollama_response(prompt)
+
+            if not answer:
+                # traditional formatting fallback
+                answer = format_answer(relevant_articles[0]['content'])
+
+            response_data = {
+                'answer': answer,
+                'sources': [a['title'] for a in relevant_articles],
+                'urls': [a['url'] for a in relevant_articles]
             }
+
         else:
-            response = {
-                'answer': "I couldn't find relevant information in our knowledge base. Please try rephrasing your question or contact support.",
-                'source': None,
-                'url': None,
-                'suggestions': []
+            response_data = {
+                'answer': "I couldn't find relevant information in our knowledge base. Please try rephrasing your question or contact support for assistance.",
+                'sources': [],
+                'urls': []
             }
-        
-        # Save chat history
-        db_manager.save_chat(session_id, user_message, response['answer'])
-        
-        return jsonify(response)
-        
+
+        db_manager.save_chat(session_id, user_message, response_data['answer'])
+        return jsonify(response_data)
     except Exception as e:
-        print(f"❌ Chat error: {e}")
-        return jsonify({'error': f'Internal server error: {str(e)}'}), 500
+        print(f"Chat error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
