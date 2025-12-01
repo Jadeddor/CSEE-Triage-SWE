@@ -1,12 +1,15 @@
+from flask_cors import CORS
 from dotenv import load_dotenv
 load_dotenv()
 from flask import Flask, request, jsonify, session, render_template
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 import sqlite3
 import re
 import os
-from flask_cors import CORS
+
+
+
 from groq import Groq
 
 
@@ -18,29 +21,60 @@ groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 
 
-from config import Config
+#from config_a import Config
 from database import DatabaseManager
 from models import init_db
 
-# Try to import Atlassian client
+
+# app.py
+from config_a import Config, ATLASSIAN_CONFIG
+from atlassian_cl import AtlassianClient
 try:
-    from atlassian_client import AtlassianClient
-    atlassian_client = AtlassianClient()
+    
+    atlassian_cl = AtlassianClient()  # no arguments
     ATLASSIAN_AVAILABLE = True
     print("✅ Atlassian client loaded successfully")
 except Exception as e:
     print(f"⚠️ Atlassian client failed: {e}")
     ATLASSIAN_AVAILABLE = False
-    atlassian_client = None
+    atlassian_cl = None
+
+
+
+# Try to import Atlassian client
+# try:
+#     from atlassian_cl import AtlassianClient
+#     atlassian_client = AtlassianClient()
+#     ATLASSIAN_AVAILABLE = True
+#     print("✅ Atlassian client loaded successfully")
+# except Exception as e:
+#     print(f"⚠️ Atlassian client failed: {e}")
+#     ATLASSIAN_AVAILABLE = False
+#     atlassian_client = None
 
 app = Flask(__name__)
-CORS(
-    app,
-    resources={r"/*": {"origins": "http://localhost:5173"}},
-    supports_credentials=True,
-    allow_headers=["Content-Type", "Authorization"],
-    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-)
+# CORS(
+#     app,
+#     resources={r"/*": {"origins": "http://localhost:5173"}},
+#     supports_credentials=True,
+#     allow_headers=["Content-Type", "Authorization"],
+#     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+# )
+CORS(app, resources={r"/*": {"origins": "*"}})
+# CORS(
+#     app,
+#     resources={r"/*": {
+#         "origins": [
+#             "http://localhost:5173",
+#             "http://127.0.0.1:5173"
+#         ]
+#     }},
+#     supports_credentials=True,
+#     allow_headers=["Content-Type", "Authorization"],
+#     methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"]
+# )
+
+
 
 
 app.config.from_object(Config)
@@ -339,21 +373,21 @@ def sync_articles():
     try:
         print("Testing Atlassian connection...")
         # Test connection first
-        if not atlassian_client.test_connection():
+        if not atlassian_cl.test_connection():
             return jsonify({
                 'status': 'error',
                 'message': 'Cannot connect to Atlassian. Check your credentials and network.'
             }), 500
         
         print("📚 Fetching articles from Atlassian...")
-        articles_data = atlassian_client.get_articles()
+        articles_data = atlassian_cl.get_articles()
         if not articles_data:
             return jsonify({
                 'status': 'error', 
                 'message': 'No articles found. Check your space key and permissions.'
             }), 404
             
-        parsed_articles = [atlassian_client.parse_article_content(article) for article in articles_data]
+        parsed_articles = [atlassian_cl.parse_article_content(article) for article in articles_data]
         db_manager.sync_articles(parsed_articles)
         
         return jsonify({
@@ -378,12 +412,12 @@ def sync_articles():
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    # Health check endpoint
     return jsonify({
         'status': 'healthy', 
-        'timestamp': datetime.now(datetime.timezone.utc),
+        'timestamp': datetime.now(timezone.utc),
         'atlassian_available': ATLASSIAN_AVAILABLE
     })
+
 
 def save_or_update_atlassian_page(page):
     article_id = str(page["id"])  # ← use Atlassian ID directly
@@ -408,5 +442,5 @@ if __name__ == '__main__':
     print("   POST /api/sync      - Sync articles from Atlassian") 
     print("   POST /api/chat      - Send chat message")
     print("   GET  /api/health    - Health check")
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=8000)
 
