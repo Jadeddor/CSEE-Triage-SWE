@@ -1,5 +1,3 @@
-
-
 from config_a import ATLASSIAN_CONFIG
 import requests
 import os

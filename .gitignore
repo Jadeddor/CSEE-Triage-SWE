@@ -41,3 +41,14 @@ MANIFEST
 # OS
 .DS_Store
 Thumbs.db
+
+# Dependencies
+/front_end/node_modules/
+node_modules/
+
+# Misc
+.DS_Store
+npm_debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log

@@ -8,8 +8,6 @@ import sqlite3
 import re
 import os
 
-
-
 from groq import Groq
 
 
@@ -33,9 +31,9 @@ try:
     
     atlassian_cl = AtlassianClient()  # no arguments
     ATLASSIAN_AVAILABLE = True
-    print("✅ Atlassian client loaded successfully")
+    print("Atlassian client loaded successfully")
 except Exception as e:
-    print(f"⚠️ Atlassian client failed: {e}")
+    print(f"Atlassian client failed: {e}")
     ATLASSIAN_AVAILABLE = False
     atlassian_cl = None
 
